@@ -32,19 +32,17 @@ OE3 = 25
 SW1 = 26
 SW2 = 27
 
-CZAS_ZIELONE = 10
-CZAS_ZOLTE = 2
-CZAS_MIGANIE = 0.2
-CZAS_GOTOWOSC = 1
+CZAS_ZIELONE = 10   # czas trwania światła zielonego
+CZAS_ZOLTE = 2      # czas trwania światła żółtego
+CZAS_MIGANIE = 0.2  # interwał między mignęciami na światłach dla pieszych
+CZAS_GOTOWOSC = 1   # czas trwania światła czerwone+żółte
 
-
-class Swiatlo(Enum):
-    CZERWONE = 1,  # światło czerwone
-    ZOLTE = 2,  # światło zółte
-    ZIELONE = 3,  # światło zielone
-    STRZALKA = 4,  # śtrzałka warunkowa
-    GOTOWOSC = 5,  # światło czerwone+zolte
-    OFF = 6  # światło wyłączone
+CZERWONE = 1,  # światło czerwone
+ZOLTE = 2,  # światło zółte
+ZIELONE = 3,  # światło zielone
+STRZALKA = 4,  # śtrzałka warunkowa
+GOTOWOSC = 5,  # światło czerwone+zolte
+OFF = 6  # światło wyłączone
 
 
 wszystkie = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]  # numery sygnalizatorow
@@ -81,14 +79,18 @@ GPIO.output(25, GPIO.HIGH)
 
 # funkcja zapala swiatła na płytce zgodnie z zawartością ustawioną w rejestrze
 def zapal():
+    GPIO.output(OE1, GPIO.HIGH)
+    GPIO.output(OE2, GPIO.HIGH)
+    GPIO.output(OE3, GPIO.HIGH)
+
     for stan in rejestr[::-1]:
         GPIO.output(DATA, stan)
         GPIO.output(CLK, GPIO.LOW)
         GPIO.output(CLK, GPIO.HIGH)
-    sleep(0.1)
+
     GPIO.output(LE, GPIO.LOW)
     GPIO.output(LE, GPIO.HIGH)
-    sleep(0.1)
+
     GPIO.output(OE1, GPIO.LOW)
     GPIO.output(OE2, GPIO.LOW)
     GPIO.output(OE3, GPIO.LOW)
@@ -110,92 +112,91 @@ def ustaw_swiatlo(nr_sygnalizatora, stan):
     if indeks_strzalka >= 0:
         rejestr[indeks_czerwone] = 0
 
-    if stan == Swiatlo.OFF:
+    if stan == OFF:
         return
 
     # ustawiamy odpowiednie światło jako włączone
-    if stan == Swiatlo.CZERWONE:
+    if stan == CZERWONE:
         rejestr[indeks_czerwone] = 1
-    elif stan == Swiatlo.ZOLTE:
+    elif stan == ZOLTE:
         if indeks_zolte >= 0:
             rejestr[indeks_zolte] = 1
-    elif stan == Swiatlo.ZIELONE:
+    elif stan == ZIELONE:
         rejestr[indeks_zielone] = 1
-    elif stan == Swiatlo.STRZALKA:
+    elif stan == STRZALKA:
         if indeks_strzalka >= 0:
             rejestr[indeks_strzalka] = 1
-    elif stan == Swiatlo.GOTOWOSC:
+    elif stan == GOTOWOSC:
         if indeks_zolte >= 0:
             rejestr[indeks_zolte] = 1
             rejestr[indeks_czerwone] = 1
     return
 
-
+# funkcja ustawia 'stan' na sygnalizatorach, których numery znajdują się w tablicy 'sygnalizatory'
 def ustaw_sygnaliaztory(sygnalizatory, stan):
     for sygnalizator in sygnalizatory:
         ustaw_swiatlo(sygnalizator, stan)
     return
 
-
+# funkcja wywołuje miganie zielonych świateł na sygnalizatorach znajdujących się w tablicty 'sygnalizatory'
 def migaj(sygnalizatory):
     powtorzenia = CZAS_ZOLTE // (2 * CZAS_MIGANIE)
     for _ in range(powtorzenia):
-        ustaw_sygnaliaztory(sygnalizatory, Swiatlo.OFF)
+        ustaw_sygnaliaztory(sygnalizatory, OFF)
         zapal()
         sleep(CZAS_MIGANIE)
-        ustaw_sygnaliaztory(sygnalizatory, Swiatlo.ZIELONE)
+        ustaw_sygnaliaztory(sygnalizatory, ZIELONE)
         zapal()
         sleep(CZAS_MIGANIE)
     return 
 
+# pojedyńczy obieg symulacji świateł drogowych
 def symuluj_swiatla():
-    ustaw_sygnaliaztory(wszystkie, Swiatlo.CZERWONE)
+    ustaw_sygnaliaztory(wszystkie, CZERWONE)
 
-    ustaw_sygnaliaztory([7, 10], Swiatlo.GOTOWOSC)
+    ustaw_sygnaliaztory([7, 10], GOTOWOSC)
     zapal()
     sleep(CZAS_GOTOWOSC)
-    ustaw_sygnaliaztory([0, 1, 2, 3, 7, 10, 14, 15, 16, 17], Swiatlo.ZIELONE)
-    ustaw_sygnaliaztory([5, 12], Swiatlo.STRZALKA)
+    ustaw_sygnaliaztory([0, 1, 2, 3, 7, 10, 14, 15, 16, 17], ZIELONE)
+    ustaw_sygnaliaztory([5, 12], STRZALKA)
     zapal()
 
     sleep(CZAS_ZIELONE)
 
-    ustaw_sygnaliaztory([5, 12], Swiatlo.CZERWONE)
-    ustaw_sygnaliaztory([7, 10], Swiatlo.ZOLTE)
+    ustaw_sygnaliaztory([5, 12], CZERWONE)
+    ustaw_sygnaliaztory([7, 10], ZOLTE)
     migaj([0, 1, 2, 3, 14, 15, 16, 17])
 
-    ustaw_sygnaliaztory([0, 1, 2, 3, 7, 10, 14, 15, 16, 17], Swiatlo.CZERWONE)
+    ustaw_sygnaliaztory([0, 1, 2, 3, 7, 10, 14, 15, 16, 17], CZERWONE)
+    ustaw_sygnaliaztory([5, 12], GOTOWOSC)
     zapal()
 
-    ustaw_sygnaliaztory([5, 12], Swiatlo.GOTOWOSC)
-    zapal()
     sleep(CZAS_GOTOWOSC)
-    ustaw_sygnaliaztory([4, 5, 8, 9, 12, 13], Swiatlo.ZIELONE)
+    ustaw_sygnaliaztory([4, 5, 8, 9, 12, 13], ZIELONE)
     zapal()
 
     sleep(CZAS_ZIELONE)
 
-    ustaw_sygnaliaztory([5, 12], Swiatlo.ZOLTE)
+    ustaw_sygnaliaztory([5, 12], ZOLTE)
     migaj([4, 8, 9, 13])
 
-    ustaw_sygnaliaztory([4, 5, 8, 9, 12, 13], Swiatlo.CZERWONE)
+    ustaw_sygnaliaztory([4, 5, 8, 9, 12, 13], CZERWONE)
+    ustaw_sygnaliaztory([6, 11], GOTOWOSC)
     zapal()
 
-    ustaw_sygnaliaztory([6, 11], Swiatlo.GOTOWOSC)
-    zapal()
     sleep(CZAS_GOTOWOSC)
-    ustaw_sygnaliaztory([6, 11], Swiatlo.ZIELONE)
-    ustaw_sygnaliaztory([7, 10], Swiatlo.STRZALKA)
+    ustaw_sygnaliaztory([6, 11], ZIELONE)
+    ustaw_sygnaliaztory([7, 10], STRZALKA)
     zapal()
 
     sleep(CZAS_ZIELONE)
 
-    ustaw_sygnaliaztory([7, 10], Swiatlo.CZERWONE)
-    ustaw_sygnaliaztory([6, 11], Swiatlo.ZOLTE)
+    ustaw_sygnaliaztory([7, 10], CZERWONE)
+    ustaw_sygnaliaztory([6, 11], ZOLTE)
     zapal()
     sleep(CZAS_ZOLTE)
 
-    ustaw_sygnaliaztory([6, 11], Swiatlo.CZERWONE)
+    ustaw_sygnaliaztory([6, 11], CZERWONE)
     zapal()
 
     return
