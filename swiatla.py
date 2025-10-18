@@ -22,7 +22,7 @@ except ModuleNotFoundError:
 from time import sleep
 from enum import Enum
 
-# STAŁE
+# PINY RaspberryPi
 DATA = 20
 LE = 22
 CLK = 21
@@ -70,11 +70,6 @@ GPIO.setup(OE3, GPIO.OUT)
 GPIO.output(SW1, GPIO.IN)
 GPIO.output(SW2, GPIO.IN)
 
-GPIO.output(22, GPIO.LOW)
-
-GPIO.output(23, GPIO.HIGH)
-GPIO.output(24, GPIO.HIGH)
-GPIO.output(25, GPIO.HIGH)
 
 
 # funkcja zapala swiatła na płytce zgodnie z zawartością ustawioną w rejestrze
