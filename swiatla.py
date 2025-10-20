@@ -39,13 +39,14 @@ CZAS_ZIELONE = 10  # czas trwania światła zielonego
 CZAS_ZOLTE = 2  # czas trwania światła żółtego
 CZAS_MIGANIE = 0.2  # interwał między mignęciami na światłach dla pieszych
 CZAS_GOTOWOSC = 1  # czas trwania światła czerwone+żółte
+CZAS_CZERWONE = 3 # czas trwania światła czerwonego na wszystkich sygnalizatorach
 
-CZERWONE = 1,  # światło czerwone
-ZOLTE = 2,  # światło zółte
-ZIELONE = 3,  # światło zielone
-STRZALKA = 4,  # śtrzałka warunkowa
-GOTOWOSC = 5,  # światło czerwone+zolte
-OFF = 6  # światło wyłączone
+SWIATLO_CZERWONE = 1,  # światło czerwone
+SWIATLO_ZOLTE = 2,  # światło zółte
+SWIATLO_ZIELONE = 3,  # światło zielone
+SWIATLO_STRZALKA = 4,  # śtrzałka warunkowa
+SWIATLO_GOTOWOSC = 5,  # światło czerwone+zolte
+SWIATLO_OFF = 6  # światło wyłączone
 
 INTERWAL = 0.5
 
@@ -53,18 +54,19 @@ PRZYCISK_WCISNETY = 0
 
 SYMULACJA = 1
 CHOINKA = 2
+MANUALNY = 3
 
-wszystkie = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]  # numery sygnalizatorow
+WSZYSTKIE = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]  # numery sygnalizatorow
 rejestr = [0] * 48  # reprezentacja rejestru 48-bitowego
 
-# czerwone[numer_sygnalizatora] = nr_bitu_w_rejestrze_48-bitowym
-czerwone = [20, 24, 22, 27, 15, 16, 30, 0, 4, 12, 8, 47, 32, 7, 44, 38, 41, 36]
-# zolte[numer_sygnalizatora] = nr_bitu_w_rejestrze_48-bitowym (jeśli sygnalizator nie ma zółtego swiatla to -1)
-zolte = [-1, -1, -1, -1, -1, 17, 29, 1, -1, -1, 9, 46, 33, -1, -1, -1, -1, -1]
-# zielone[numer_sygnalizatora] = nr_bitu_w_rejestrze_48-bitowym
-zielone = [21, 25, 23, 26, 14, 18, 28, 2, 5, 13, 10, 45, 34, 6, 43, 39, 42, 37]
-# strzalka[numer_sygnalizatora] = nr_bitu_w_rejestrze_48-bitowym (jeśli sygnalizator nie ma strzałki to -1)
-strzalka = [-1, -1, -1, -1, -1, 19, -1, 3, -1, -1, 11, -1, 35, -1, -1, -1, -1, -1]
+# CZERWONE[numer_sygnalizatora] = nr_bitu_w_rejestrze_48-bitowym
+CZERWONE = [20, 24, 22, 27, 15, 16, 30, 0, 4, 12, 8, 47, 32, 7, 44, 38, 41, 36]
+# ZOLTE[numer_sygnalizatora] = nr_bitu_w_rejestrze_48-bitowym (jeśli sygnalizator nie ma zółtego swiatla to -1)
+ZOLTE = [-1, -1, -1, -1, -1, 17, 29, 1, -1, -1, 9, 46, 33, -1, -1, -1, -1, -1]
+# ZIELONE[numer_sygnalizatora] = nr_bitu_w_rejestrze_48-bitowym
+ZIELONE = [21, 25, 23, 26, 14, 18, 28, 2, 5, 13, 10, 45, 34, 6, 43, 39, 42, 37]
+# STRZALKA[numer_sygnalizatora] = nr_bitu_w_rejestrze_48-bitowym (jeśli sygnalizator nie ma strzałki to -1)
+STRZALKA = [-1, -1, -1, -1, -1, 19, -1, 3, -1, -1, 11, -1, 35, -1, -1, -1, -1, -1]
 
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
@@ -102,10 +104,10 @@ def zapal():
 
 # funkcja ustawia stan światła w rejestrze na podstawie numeru sygnalizatora i podanego stanu
 def ustaw_swiatlo(nr_sygnalizatora, stan):
-    indeks_czerwone = czerwone[nr_sygnalizatora]
-    indeks_zolte = zolte[nr_sygnalizatora]
-    indeks_zielone = zielone[nr_sygnalizatora]
-    indeks_strzalka = strzalka[nr_sygnalizatora]
+    indeks_czerwone = CZERWONE[nr_sygnalizatora]
+    indeks_zolte = ZOLTE[nr_sygnalizatora]
+    indeks_zielone = ZIELONE[nr_sygnalizatora]
+    indeks_strzalka = STRZALKA[nr_sygnalizatora]
 
     # wyłączamy wszystkie światła
     rejestr[indeks_czerwone] = 0
@@ -115,21 +117,22 @@ def ustaw_swiatlo(nr_sygnalizatora, stan):
     if indeks_strzalka >= 0:
         rejestr[indeks_czerwone] = 0
 
-    if stan == OFF:
+    if stan == SWIATLO_OFF:
         return
 
     # ustawiamy odpowiednie światło jako włączone
-    if stan == CZERWONE:
+    if stan == SWIATLO_CZERWONE:
         rejestr[indeks_czerwone] = 1
-    elif stan == ZOLTE:
+    elif stan == SWIATLO_ZOLTE:
         if indeks_zolte >= 0:
             rejestr[indeks_zolte] = 1
-    elif stan == ZIELONE:
+    elif stan == SWIATLO_ZIELONE:
         rejestr[indeks_zielone] = 1
-    elif stan == STRZALKA:
+    elif stan == SWIATLO_STRZALKA:
         if indeks_strzalka >= 0:
             rejestr[indeks_strzalka] = 1
-    elif stan == GOTOWOSC:
+            rejestr[indeks_czerwone] = 1
+    elif stan == SWIATLO_GOTOWOSC:
         if indeks_zolte >= 0:
             rejestr[indeks_zolte] = 1
             rejestr[indeks_czerwone] = 1
@@ -143,23 +146,27 @@ def ustaw_sygnaliaztory(sygnalizatory, stan):
     return
 
 
-# funkcja wywołuje miganie zielonych świateł na sygnalizatorach znajdujących się w tablicty 'sygnalizatory'
+# funkcja wywołuje miganie zielonych świateł na sygnalizatorach znajdujących się w tablicy 'sygnalizatory'
 def migaj(sygnalizatory):
     powtorzenia = CZAS_ZOLTE // (2 * CZAS_MIGANIE)
     for _ in range(powtorzenia):
-        ustaw_sygnaliaztory(sygnalizatory, OFF)
+        ustaw_sygnaliaztory(sygnalizatory, SWIATLO_OFF)
         zapal()
-        sleep(CZAS_MIGANIE)
-        ustaw_sygnaliaztory(sygnalizatory, ZIELONE)
+        przerwij = czekaj(CZAS_MIGANIE)
+        if przerwij:
+            return True
+        ustaw_sygnaliaztory(sygnalizatory, SWIATLO_ZIELONE)
         zapal()
-        sleep(CZAS_MIGANIE)
-    return
+        przerwij = czekaj(CZAS_MIGANIE)
+        if przerwij:
+            return True
+    return False
 
 
 def czytaj_przycisk(pin):
     return GPIO.input(pin)
 
-
+# funkcja czeka przez podany czas chyba, że zostanie przerwana poprzez nacisniecie przycisku
 def czekaj(czas):
     powtorzenia = czas // INTERWAL
     for _ in range(powtorzenia):
@@ -169,89 +176,109 @@ def czekaj(czas):
             return True
     return False
 
+# obieg pojedynczej fazy swiatel
+def uruchom_faze_swiatel(samochody, piesi, samochody_strzalka):
+    ustaw_sygnaliaztory(samochody, SWIATLO_GOTOWOSC)
+    zapal()
+    przerwij = czekaj(CZAS_GOTOWOSC)
+    if przerwij:
+        return True
+    ustaw_sygnaliaztory(samochody, SWIATLO_ZIELONE)
+    ustaw_sygnaliaztory(piesi, SWIATLO_ZIELONE)
+    ustaw_sygnaliaztory(samochody_strzalka, SWIATLO_STRZALKA)
+    zapal()
+    przerwij = czekaj(CZAS_ZIELONE)
+    if przerwij:
+        return True
+    ustaw_sygnaliaztory(samochody_strzalka, SWIATLO_CZERWONE)
+    ustaw_sygnaliaztory(samochody, SWIATLO_ZOLTE)
+    zapal()
+    przerwij = migaj(piesi)
+    if przerwij:
+        return True
+    ustaw_sygnaliaztory(samochody, SWIATLO_CZERWONE)
+    ustaw_sygnaliaztory(piesi, SWIATLO_CZERWONE)
+    zapal()
+    przerwij = czekaj(CZAS_CZERWONE)
+    if przerwij:
+        return True
+
+    return False
+
 
 # pojedyńczy obieg symulacji świateł drogowych
 def symuluj_swiatla():
-    ustaw_sygnaliaztory(wszystkie, CZERWONE)
+    ustaw_sygnaliaztory(WSZYSTKIE, SWIATLO_CZERWONE)
 
-    ustaw_sygnaliaztory([7, 10], GOTOWOSC)
-    zapal()
-    sleep(CZAS_GOTOWOSC)
-    ustaw_sygnaliaztory([0, 1, 2, 3, 7, 10, 14, 15, 16, 17], ZIELONE)
-    ustaw_sygnaliaztory([5, 12], STRZALKA)
-    zapal()
-
-    status = czekaj(CZAS_ZIELONE)
-    if status:
+    samochody = [7, 10]
+    piesi = [0, 1, 2, 3, 14, 15, 16, 17]
+    samochody_strzalka = [5, 12]
+    przerwij = uruchom_faze_swiatel(samochody, piesi, samochody_strzalka)
+    if przerwij:
         return CHOINKA
 
-    ustaw_sygnaliaztory([5, 12], CZERWONE)
-    ustaw_sygnaliaztory([7, 10], ZOLTE)
-    migaj([0, 1, 2, 3, 14, 15, 16, 17])
-
-    ustaw_sygnaliaztory([0, 1, 2, 3, 7, 10, 14, 15, 16, 17], CZERWONE)
-    ustaw_sygnaliaztory([5, 12], GOTOWOSC)
-    zapal()
-
-    sleep(CZAS_GOTOWOSC)
-    ustaw_sygnaliaztory([4, 5, 8, 9, 12, 13], ZIELONE)
-    zapal()
-
-    status = czekaj(CZAS_ZIELONE)
-    if status:
+    samochody = [5, 12]
+    piesi = [4, 8, 9, 13]
+    samochody_strzalka = [7, 10]
+    przerwij = uruchom_faze_swiatel(samochody, piesi, samochody_strzalka)
+    if przerwij:
         return CHOINKA
 
-    ustaw_sygnaliaztory([5, 12], ZOLTE)
-    migaj([4, 8, 9, 13])
-
-    ustaw_sygnaliaztory([4, 5, 8, 9, 12, 13], CZERWONE)
-    ustaw_sygnaliaztory([6, 11], GOTOWOSC)
-    zapal()
-
-    status = czekaj(CZAS_GOTOWOSC)
-    if status:
+    samochody = [6,11]
+    piesi = []
+    samochody_strzalka = [7,10]
+    przerwij = uruchom_faze_swiatel(samochody, piesi, samochody_strzalka)
+    if przerwij:
         return CHOINKA
-    ustaw_sygnaliaztory([6, 11], ZIELONE)
-    ustaw_sygnaliaztory([7, 10], STRZALKA)
-    zapal()
-
-    status = czekaj(CZAS_ZIELONE)
-    if status:
-        return CHOINKA
-
-    ustaw_sygnaliaztory([7, 10], CZERWONE)
-    ustaw_sygnaliaztory([6, 11], ZOLTE)
-    zapal()
-    status = czekaj(CZAS_ZOLTE)
-    if status:
-        return CHOINKA
-
-    ustaw_sygnaliaztory([6, 11], CZERWONE)
-    zapal()
 
     return SYMULACJA
 
+
 def choinka():
-    for sygnalizator in wszystkie:
-        ustaw_sygnaliaztory(sygnalizator, ZIELONE)
+    for sygnalizator in WSZYSTKIE:
+        ustaw_sygnaliaztory(sygnalizator, SWIATLO_ZIELONE)
     zapal()
     status = czekaj(CZAS_ZOLTE)
     if status:
-        return SYMULACJA
-    for sygnalizator in wszystkie:
-        ustaw_sygnaliaztory(sygnalizator, ZOLTE)
+        return MANUALNY
+    for sygnalizator in WSZYSTKIE:
+        ustaw_sygnaliaztory(sygnalizator, SWIATLO_ZOLTE)
     zapal()
     status = czekaj(CZAS_ZOLTE)
     if status:
-        return SYMULACJA
-    for sygnalizator in wszystkie:
-        ustaw_sygnaliaztory(sygnalizator, CZERWONE)
+        return MANUALNY
+    for sygnalizator in WSZYSTKIE:
+        ustaw_sygnaliaztory(sygnalizator, SWIATLO_CZERWONE)
     zapal()
     status = czekaj(CZAS_ZOLTE)
     if status:
-        return SYMULACJA
+        return MANUALNY
 
     return CHOINKA
+
+def manualny():
+    wlaczone = 0
+    koniec = False
+    ustaw_sygnaliaztory(WSZYSTKIE, SWIATLO_OFF)
+    zapal()
+
+    while not koniec:
+        przycisk = czytaj_przycisk(SW2)
+        if przycisk == PRZYCISK_WCISNETY:
+            if wlaczone==48:
+                wlaczone = 0
+            else:
+                wlaczone += 1
+            rejestr = ([1] * wlaczone) + ([0] * (48 - wlaczone))
+            zapal()
+        przycisk = czytaj_przycisk(SW1)
+        if przycisk == PRZYCISK_WCISNETY:
+            koniec = True
+
+    return SYMULACJA
+
+    
+    
 
 def main():
     tryb = SYMULACJA
@@ -260,6 +287,8 @@ def main():
             tryb = symuluj_swiatla()
         if tryb == CHOINKA:
             tryb = choinka()
+        if tryb == MANUALNY:
+            tryb = manualny()
 
 
 if __name__ == "__main__":
