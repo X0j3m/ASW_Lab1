@@ -1,27 +1,4 @@
-try:
-    import RPi.GPIO as GPIO
-except ModuleNotFoundError:
-    # Symulacja RPi.GPIO, żeby kod działał nda Windows (na laborce mozna usunac)
-    class GPIO:
-        BCM = BOARD = OUT = IN = HIGH = LOW = None
-
-        @staticmethod
-        def setmode(mode): print(f"[GPIO SIM] setmode({mode})")
-
-        @staticmethod
-        def setup(pin, mode): print(f"[GPIO SIM] setup(pin={pin}, mode={mode})")
-
-        @staticmethod
-        def output(pin, value): print(f"[GPIO SIM] output(pin={pin}, value={value})")
-
-        @staticmethod
-        def input(pin): print(f"[GPIO SIM] input(pin={pin})")
-
-        @staticmethod
-        def cleanup(): print("[GPIO SIM] cleanup()")
-
-        @staticmethod
-        def setwarnings(flag): print("[GPIO SIM] setwarnings(flag)")
+import RPi.GPIO as GPIO
 from time import sleep
 from enum import Enum
 
@@ -78,8 +55,8 @@ GPIO.setup(OE1, GPIO.OUT)
 GPIO.setup(OE2, GPIO.OUT)
 GPIO.setup(OE3, GPIO.OUT)
 
-GPIO.output(SW1, GPIO.IN)
-GPIO.output(SW2, GPIO.IN)
+GPIO.setup(SW1, GPIO.IN)
+GPIO.setup(SW2, GPIO.IN)
 
 
 # funkcja zapala swiatła na płytce zgodnie z zawartością ustawioną w rejestrze
@@ -168,7 +145,7 @@ def czytaj_przycisk(pin):
 
 # funkcja czeka przez podany czas chyba, że zostanie przerwana poprzez nacisniecie przycisku
 def czekaj(czas):
-    powtorzenia = czas // INTERWAL
+    powtorzenia = int(czas // INTERWAL)
     for _ in range(powtorzenia):
         sleep(INTERWAL)
         przycisk = czytaj_przycisk(SW1)
