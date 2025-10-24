@@ -13,8 +13,8 @@ SW1 = 26
 SW2 = 27
 
 CZAS_ZIELONE = 10  # czas trwania światła zielonego
-CZAS_ZOLTE = 2  # czas trwania światła żółtego
-CZAS_MIGANIE = 0.2  # interwał między mignęciami na światłach dla pieszych
+CZAS_ZOLTE = 3  # czas trwania światła żółtego
+CZAS_MIGANIE = 0.5  # interwał między mignęciami na światłach dla pieszych
 CZAS_GOTOWOSC = 1  # czas trwania światła czerwone+żółte
 CZAS_CZERWONE = 3 # czas trwania światła czerwonego na wszystkich sygnalizatorach
 
@@ -92,7 +92,7 @@ def ustaw_swiatlo(nr_sygnalizatora, stan):
         rejestr[indeks_zolte] = 0
     rejestr[indeks_zielone] = 0
     if indeks_strzalka >= 0:
-        rejestr[indeks_czerwone] = 0
+        rejestr[indeks_strzalka] = 0
 
     if stan == SWIATLO_OFF:
         return
@@ -125,7 +125,7 @@ def ustaw_sygnaliaztory(sygnalizatory, stan):
 
 # funkcja wywołuje miganie zielonych świateł na sygnalizatorach znajdujących się w tablicy 'sygnalizatory'
 def migaj(sygnalizatory):
-    powtorzenia = CZAS_ZOLTE // (2 * CZAS_MIGANIE)
+    powtorzenia = int(CZAS_ZOLTE // (2 * CZAS_MIGANIE))
     for _ in range(powtorzenia):
         ustaw_sygnaliaztory(sygnalizatory, SWIATLO_OFF)
         zapal()
@@ -141,6 +141,8 @@ def migaj(sygnalizatory):
 
 
 def czytaj_przycisk(pin):
+    przycisk = GPIO.input(pin)
+    # print(przycisk)
     return GPIO.input(pin)
 
 # funkcja czeka przez podany czas chyba, że zostanie przerwana poprzez nacisniecie przycisku
@@ -213,19 +215,23 @@ def symuluj_swiatla():
 
 def choinka():
     for sygnalizator in WSZYSTKIE:
-        ustaw_sygnaliaztory(sygnalizator, SWIATLO_ZIELONE)
+        ustaw_swiatlo(sygnalizator, SWIATLO_OFF)
+    zapal()
+
+    for sygnalizator in WSZYSTKIE:
+        ustaw_swiatlo(sygnalizator, SWIATLO_ZIELONE)
     zapal()
     status = czekaj(CZAS_ZOLTE)
     if status:
         return MANUALNY
     for sygnalizator in WSZYSTKIE:
-        ustaw_sygnaliaztory(sygnalizator, SWIATLO_ZOLTE)
+        ustaw_swiatlo(sygnalizator, SWIATLO_ZOLTE)
     zapal()
     status = czekaj(CZAS_ZOLTE)
     if status:
         return MANUALNY
     for sygnalizator in WSZYSTKIE:
-        ustaw_sygnaliaztory(sygnalizator, SWIATLO_CZERWONE)
+        ustaw_swiatlo(sygnalizator, SWIATLO_CZERWONE)
     zapal()
     status = czekaj(CZAS_ZOLTE)
     if status:
@@ -238,6 +244,7 @@ def manualny():
     koniec = False
     ustaw_sygnaliaztory(WSZYSTKIE, SWIATLO_OFF)
     zapal()
+    sleep(1)
 
     while not koniec:
         przycisk = czytaj_przycisk(SW2)
@@ -246,8 +253,16 @@ def manualny():
                 wlaczone = 0
             else:
                 wlaczone += 1
-            rejestr = ([1] * wlaczone) + ([0] * (48 - wlaczone))
+            
+            for i in range(wlaczone):
+                rejestr[i]=1
+            for i in range(wlaczone, 48):
+                rejestr[i]=0
+            # rejestr = ([1] * wlaczone) + ([0] * (48 - wlaczone))
+            print(rejestr)
             zapal()
+            while przycisk==PRZYCISK_WCISNETY:
+                przycisk = czytaj_przycisk(SW2)
         przycisk = czytaj_przycisk(SW1)
         if przycisk == PRZYCISK_WCISNETY:
             koniec = True
@@ -260,11 +275,12 @@ def manualny():
 def main():
     tryb = SYMULACJA
     while True:
+        print(tryb)
         if tryb == SYMULACJA:
             tryb = symuluj_swiatla()
-        if tryb == CHOINKA:
+        elif tryb == CHOINKA:
             tryb = choinka()
-        if tryb == MANUALNY:
+        elif tryb == MANUALNY:
             tryb = manualny()
 
 
